@@ -18,12 +18,6 @@ import { useNavigation } from "@react-navigation/native";
 import * as SecureStore from "expo-secure-store";
 import { depositSavings, withdrawSavings } from "../../services/stellar";
 
-// ---------------------------------------------------------------------
-// Inserts one savings ledger row, performs the matching on-chain call
-// (deposit or withdraw), then marks it confirmed/failed. Returns true
-// on success. Shared between the "saving" and "balance" entries a scan
-// produces, since both follow the exact same shape.
-// ---------------------------------------------------------------------
 async function processLedgerEntry({
   userId,
   walletId,
@@ -85,12 +79,6 @@ async function processLedgerEntry({
   }
 }
 
-// ---------------------------------------------------------------------
-// QR payload format for this demo: a JSON string encoded in the QR,
-// e.g. {"merchant":"Kopi Kenangan","amount":2.30,"category":"coffee"}
-// Real merchant QR standards (DuitNow QR etc.) would need a different
-// parser — this is a placeholder format for the hackathon demo.
-// ---------------------------------------------------------------------
 type ScannedPayload = {
   merchant: string;
   amount: number;
@@ -222,22 +210,19 @@ export default function ScanScreen() {
         return;
       }
 
-      // Two separate ledger entries for one scan:
-      // 1. "saving" +roundUpAmount -> goes into Total Saving (on-chain deposit)
-      // 2. "balance" -roundedAmount -> comes out of Current Balance (on-chain withdrawal)
-      // Both are real, independent on-chain calls — the net chain effect
-      // is a withdrawal of the original purchase_amount, which is exactly
-      // what should have "left the vault" to pay for the purchase.
-      const savingSuccess = await processLedgerEntry({
-        userId,
-        walletId: wallet.id,
-        transactionId: tx.id,
-        amount: roundUpAmount,
-        ledgerType: "saving",
-        secretKey,
-        publicKey: wallet.stellar_public_key,
-        direction: "deposit",
-      });
+      let savingSuccess = true;
+      if (roundUpAmount > 0) {
+        savingSuccess = await processLedgerEntry({
+          userId,
+          walletId: wallet.id,
+          transactionId: tx.id,
+          amount: roundUpAmount,
+          ledgerType: "saving",
+          secretKey,
+          publicKey: wallet.stellar_public_key,
+          direction: "deposit",
+        });
+      }
 
       if (!savingSuccess) {
         Alert.alert(
@@ -449,9 +434,7 @@ export default function ScanScreen() {
     );
   }
 
-  // ---------------------------------------------------------------------
-  // Step: Success
-  // ---------------------------------------------------------------------
+
   if (step === "success" && scanned) {
     const roundedAmount = Math.ceil(scanned.amount / 0.5) * 0.5;
     const roundUpAmount = Number((roundedAmount - scanned.amount).toFixed(2));

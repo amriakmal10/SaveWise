@@ -81,7 +81,7 @@ export default function AccountsScreen() {
       }
     >
       {/* Navy header */}
-      <View className="bg-navy pt-16 pb-8 px-6 rounded-b-[40px] overflow-hidden">
+      <View className="bg-navy pt-24 pb-12 px-6 rounded-b-[40px] overflow-hidden">
         <HeaderBubbles />
         <Text className="text-2xl font-bold text-white">Accounts</Text>
         <Text className="text-white/60 mt-1">Manage your savings</Text>
